@@ -32,6 +32,7 @@ class Reactant(object):
         self.name = name
         self.SMILES = SMILES
         self.location = location
+        self.comment = comment
         self.mol = Chem.MolFromSmiles(SMILES)
         self.MW = Descriptors.ExactMolWt(self.mol)
         self.solubility = solubility
