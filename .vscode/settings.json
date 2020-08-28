@@ -1,5 +1,11 @@
 {
     "python.pythonPath": "/home/warren/miniconda3/envs/OT/bin/python",
     "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.testing.pytestArgs": [
+        "xchemOT"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
 }

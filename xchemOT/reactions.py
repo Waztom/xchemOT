@@ -28,14 +28,14 @@ class Reactant(object):
 
     """ 
 
-    def __init__(self, name, SMILES, location, solubility=None):
-        self.name = name
-        self.SMILES = SMILES
-        self.location = location
-        self.comment = comment
+    def __init__(self, name, SMILES, location, comment, solubility=None):
+        self.name: str = name
+        self.SMILES: str = SMILES
+        self.location: str = location
+        self.comment: str = comment
         self.mol = Chem.MolFromSmiles(SMILES)
         self.MW = Descriptors.ExactMolWt(self.mol)
-        self.solubility = solubility
+        self.solubility: float = solubility
         
 class Reaction(object):
     """
@@ -54,7 +54,7 @@ class Reaction(object):
             self.reactants = None
         if reactants:
             self.reactants = [reactant for reactant in reactants]
-            self.reactionsmiles = str(reactants[0].SMILES + '.' + reactants[1].SMILES)
+            self.reactionsmiles: str = str(reactants[0].SMILES + '.' + reactants[1].SMILES)
             self.reactantmols = tuple([reactant.mol for reactant in reactants])
             self.reactantMWs = [reactant.MW for reactant in reactants]       
             
