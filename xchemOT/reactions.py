@@ -16,8 +16,7 @@ import os
 from rxn4chemistry import RXN4ChemistryWrapper
 
 # Setup IBM RxN API
-#api_key=os.environ['IBM_API_KEY']
-api_key = 'apk-0c701913dc63c62e6cd1ee03614fa72ad54b2f5cd00b779e930163e0fb9653f663b7baf7cc9115ae128b9f1d50c52a8758d6fef019f571e7ebf398613701faafb95b01d507d03a177dd1dcbf8afe2eae' 
+api_key=os.environ['IBM_API_KEY']
 rxn4chemistry_wrapper = RXN4ChemistryWrapper(api_key=api_key)
 rxn4chemistry_wrapper.create_project('Moonshot_amide_synthesis')
 
@@ -168,8 +167,7 @@ class Reaction(object):
     def getDictionary(self):
         return {
             'Reaction_image': self.reactionimage,
-            'Product_SMILES': self.product,
-            'Product_mol':
+            'Product_SMILES': self.product
         } 
             
 
