@@ -12,6 +12,14 @@ from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import rdChemReactions
 from rdkit.Chem import Draw
+import os
+from rxn4chemistry import RXN4ChemistryWrapper
+
+# Setup IBM RxN API
+#api_key=os.environ['IBM_API_KEY']
+api_key = 'apk-0c701913dc63c62e6cd1ee03614fa72ad54b2f5cd00b779e930163e0fb9653f663b7baf7cc9115ae128b9f1d50c52a8758d6fef019f571e7ebf398613701faafb95b01d507d03a177dd1dcbf8afe2eae' 
+rxn4chemistry_wrapper = RXN4ChemistryWrapper(api_key=api_key)
+rxn4chemistry_wrapper.create_project('Moonshot_amide_synthesis')
 
 class Reactant(object):
     """
@@ -28,14 +36,14 @@ class Reactant(object):
 
     """ 
 
-    def __init__(self, name, SMILES, location, comment, solubility=None):
-        self.name: str = name
-        self.SMILES: str = SMILES
-        self.location: str = location
-        self.comment: str = comment
+    def __init__(self, name, SMILES, location, comment, solubility):
+        self.name = name
+        self.SMILES = SMILES
+        self.location = location
+        self.comment = comment
         self.mol = Chem.MolFromSmiles(SMILES)
         self.MW = Descriptors.ExactMolWt(self.mol)
-        self.solubility: float = solubility
+        self.solubility = solubility
         
 class Reaction(object):
     """
@@ -47,25 +55,40 @@ class Reaction(object):
         reactantmols    The tuple of reactant rdkit mol objects 
         reactantMWs     The list of exact molecular weights of the reactants
         product         The SMILES notation of the product - this is given if the chemist wants to predict the reactants
+        productmass     The expected mass (g) of product to be made
     """ 
-    def __init__(self, reactants=None, product=None):    
+    def __init__(self, productmass, reactants=None, product=None):    
         # Reactants tuples of Compound objects
         if not reactants:
-            self.reactants = None
+            self.reactants = self.getReactions()
         if reactants:
             self.reactants = [reactant for reactant in reactants]
-            self.reactionsmiles: str = str(reactants[0].SMILES + '.' + reactants[1].SMILES)
+            self.reactionsmiles = str(reactants[0].SMILES + '.' + reactants[1].SMILES)
             self.reactantmols = tuple([reactant.mol for reactant in reactants])
-            self.reactantMWs = [reactant.MW for reactant in reactants]       
-            
-        self.product = product 
+            self.reactantMWs = [reactant.MW for reactant in reactants]
+            self.reactantsolubility = [reactant.solubility for reactant in reactants]        
         
+        # NB need to have option to start with reactants or product
+        if not product:    
+            self.product = self.getProduct()
+            self.productmol = Chem.MolFromSmiles(self.product)
+            self.productMW = Descriptors.ExactMolWt(self.productmol)
+        if product:
+            self.product = product
+            self.productmol = Chem.MolFromSmiles(product)
+            self.productMW = Descriptors.ExactMolWt(self.productmol)
+        
+        self.productmass = productmass
+        self.productmols = self.productmass / self.productMW
+         
     
     def getProduct(self):
         """
         This function uses the IBM api to predict the product formed from reacting
-        two reactant
+        two reactants
         """
+        self.product = None
+
         while self.product is None:
             try:
                 # IBM API allows a call to be made every 2s with a mximum of 5 per minute
@@ -74,9 +97,10 @@ class Reaction(object):
                 time.sleep(30)
                 results = rxn4chemistry_wrapper.get_predict_reaction_results(response['prediction_id'])
                 rxn_smiles = results['response']['payload']['attempts'][0]['smiles']
-                self.product = rxn_smiles.split('>>')[-1]          
+                self.product = rxn_smiles.split('>>')[-1]         
             except Exception as e:
                 print(e)
+        return self.product 
   
                 
     def getReactions(self):
@@ -103,31 +127,50 @@ class Reaction(object):
 
     def drawReaction(self):
         try:
-            reactionsmiles = "{}>>{}".format(self.reactionsmiles,self.product)
-            print(reactionsmiles)
-            return Draw.ReactionToImage(reactionsmiles,useSmiles=True)
+            self.reactionsmarts = AllChem.ReactionFromSmarts("{}>>{}".format(self.reactionsmiles,self.product),useSmiles=True)
+            self.reactionimage = Draw.ReactionToImage(self.reactionsmarts) 
         except Exception as e: 
             print(e)
     
-    def getReactantAmounts(self, product_mass, mol_equivalents=1, product_yield=1):
+    def getReactantAmounts(self, mol_equivalents=1, product_yield=1):
         """
-        mol_equivalents is the scale of reactant two mols needed
+        mol_equivalents is the mol equivalents of reactant two needed
         reagents are rdkit mol objects of any extra reagents needed 
         
-        Returns estimated masses of reactants needed to yield product mass in mg 
+        Returns estimated masses (g) and volumes (ml) of reactants needed to yield product mass in mg 
         """
-        self.productmass = product_mass
-        self.productyield = product_yield
+        
         try:
-            self.productmols = self.productmass / Descriptors.ExactMolWt(self.product)
             if len(self.reactantMWs) == 1:
-                self.react_1_mass = (self.productmols * self.reactantMWs[0]) / self.productyield 
-                self.react_2_mass = 0
+                # Do calcs for reactant 1 -> required: mass, mols and volume
+                self.react_1_mass = self.productmols * self.reactantMWs[0] / product_yield
+                self.react_1_mols = self.react_1_mass / self.reactantMWs[0]
+                self.react_1_volume = (self.react_1_mols / self.reactantsolubility[0]) * 1000  
+                # Do calcs for reactant 2 -> required: mass, mols and volume
+                self.react_2_mass = None
+                self.react_2_mols = None
+                self.react_2_volume = None
+
             if len(self.reactantMWs) == 2:
-                self.react_1_mass = (self.productmols * self.reactantMWs[0]) / self.productyield
-                self.react_2_mass = (self.productmols * mol_equivalents * self.reactantMWs[1]) / self.productyield
+                # Do calcs for reactant 1 -> required: mass, mols and volume
+                self.react_1_mass = self.productmols * self.reactantMWs[0] / product_yield
+                self.react_1_mols = self.react_1_mass / self.reactantMWs[0] 
+                self.react_1_volume = (self.react_1_mols / self.reactantsolubility[0]) * 1000  
+                # Do calcs for reactant 2 -> required:  mass, mols and volume
+                self.react_2_mass = self.react_1_mols * mol_equivalents * self.reactantMWs[1] / product_yield                
+                self.react_2_mols = self.react_2_mass / self.reactantMWs[1] 
+                self.react_2_volume = (self.react_2_mols / self.reactantsolubility[1]) * 1000 
+
         except Exception as e: 
-            print(e)  
+            print(e) 
+
+    # Need to write all of this info to Pandas df as some point
+    def getDictionary(self):
+        return {
+            'Reaction_image': self.reactionimage,
+            'Product_SMILES': self.product,
+            'Product_mol':
+        } 
             
 
 
