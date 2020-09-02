@@ -16,7 +16,7 @@ import os
 from rxn4chemistry import RXN4ChemistryWrapper
 
 # Setup IBM RxN API
-api_key=os.environ['IBM_API_KEY']
+api_key=os.environ['IBM_API_KEY'] 
 rxn4chemistry_wrapper = RXN4ChemistryWrapper(api_key=api_key)
 rxn4chemistry_wrapper.create_project('Moonshot_amide_synthesis')
 
@@ -35,11 +35,11 @@ class Reactant(object):
 
     """ 
 
-    def __init__(self, name, SMILES, location, comment, solubility):
+    def __init__(self, name, SMILES, location, comments, solubility):
         self.name = name
         self.SMILES = SMILES
         self.location = location
-        self.comment = comment
+        self.comments = comments
         self.mol = Chem.MolFromSmiles(SMILES)
         self.MW = Descriptors.ExactMolWt(self.mol)
         self.solubility = solubility
@@ -127,7 +127,8 @@ class Reaction(object):
     def drawReaction(self):
         try:
             self.reactionsmarts = AllChem.ReactionFromSmarts("{}>>{}".format(self.reactionsmiles,self.product),useSmiles=True)
-            self.reactionimage = Draw.ReactionToImage(self.reactionsmarts) 
+            self.reactionimage = Draw.ReactionToImage(self.reactionsmarts)
+            return Draw.ReactionToImage(self.reactionsmarts)
         except Exception as e: 
             print(e)
     
@@ -166,8 +167,16 @@ class Reaction(object):
     # Need to write all of this info to Pandas df as some point
     def getDictionary(self):
         return {
-            'Reaction_image': self.reactionimage,
-            'Product_SMILES': self.product
+            'Product_SMILES': self.product,
+            'Product_mass': self.productmass,
+            'React_1_name': self.reactants[0].name,
+            'React_1_location': self.reactants[0].location + '__' + self.reactants[0].comments,
+            'React_1_mass': self.react_1_mass,
+            'React_1_vol': self.react_1_volume,
+            'React_2_name': self.reactants[1].name,
+            'React_2_location': self.reactants[1].location + '__' + self.reactants[1].comments,
+            'React_2_mass': self.react_2_mass,
+            'React_2_vol': self.react_2_volume          
         } 
             
 
