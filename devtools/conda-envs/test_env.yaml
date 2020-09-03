@@ -13,6 +13,7 @@ dependencies:
   - codecov
 
     # Pip-only installs
-  #- pip:
+  - pip:
+     - rxn4chemistry
   #  - codecov
 
