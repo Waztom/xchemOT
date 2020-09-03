@@ -16,9 +16,9 @@ import os
 from rxn4chemistry import RXN4ChemistryWrapper
 
 # Setup IBM RxN API
-api_key=os.environ['IBM_API_KEY'] 
-rxn4chemistry_wrapper = RXN4ChemistryWrapper(api_key=api_key)
-rxn4chemistry_wrapper.create_project('Moonshot_amide_synthesis')
+#api_key=os.environ['IBM_API_KEY'] 
+#rxn4chemistry_wrapper = RXN4ChemistryWrapper(api_key=api_key)
+#rxn4chemistry_wrapper.create_project('Moonshot_amide_synthesis')
 
 class Reactant(object):
     """
