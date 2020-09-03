@@ -16,7 +16,7 @@ def test_reactant_class():
     reactant = Reactant(name='1,3,7-trimethylpurine-2,6-dione', 
                         SMILES='CN1C=NC2=C1C(=O)N(C(=O)N2C)C', 
                         location='coffee cup',
-                        comment='wake me up',        
+                        comments='wake me up',        
                         solubility='100M')
 
     assert reactant.MW == 194.08037556 
