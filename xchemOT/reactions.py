@@ -14,6 +14,10 @@ from rdkit.Chem import rdChemReactions
 from rdkit.Chem import Draw
 import os
 from rxn4chemistry import RXN4ChemistryWrapper
+import sys
+sys.path.append('..')
+from makeit.synthetic.evaluation import template_free
+from makeit.retrosynthetic import tree_builder
 
 # Setup IBM RxN API
 #api_key=os.environ['IBM_API_KEY'] 
