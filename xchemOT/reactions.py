@@ -138,14 +138,16 @@ class Reaction(object):
         reagents are rdkit mol objects of any extra reagents needed 
         
         Returns estimated masses (g) and volumes (ml) of reactants needed to yield product mass in mg 
+
+        NBBBBBB - Must fix solubility/ass calcs
         """
-        
+      
         try:
             if len(self.reactantMWs) == 1:
                 # Do calcs for reactant 1 -> required: mass, mols and volume
-                self.react_1_mass = self.productmols * self.reactantMWs[0] / product_yield
+                self.react_1_mass = (self.productmols * self.reactantMWs[0]) / product_yield
                 self.react_1_mols = self.react_1_mass / self.reactantMWs[0]
-                self.react_1_volume = (self.react_1_mols / self.reactantsolubility[0]) * 1000  
+                self.react_1_volume = (self.react_1_mols / 0.5) * 1000
                 # Do calcs for reactant 2 -> required: mass, mols and volume
                 self.react_2_mass = None
                 self.react_2_mols = None
@@ -153,13 +155,13 @@ class Reaction(object):
 
             if len(self.reactantMWs) == 2:
                 # Do calcs for reactant 1 -> required: mass, mols and volume
-                self.react_1_mass = self.productmols * self.reactantMWs[0] / product_yield
-                self.react_1_mols = self.react_1_mass / self.reactantMWs[0] 
-                self.react_1_volume = (self.react_1_mols / self.reactantsolubility[0]) * 1000  
+                self.react_1_mass = (self.productmols * self.reactantMWs[0]) / product_yield
+                self.react_1_mols = self.react_1_mass / self.reactantMWs[0]
+                self.react_1_volume = (self.react_1_mols / 0.5) * 1000
                 # Do calcs for reactant 2 -> required:  mass, mols and volume
-                self.react_2_mass = self.react_1_mols * mol_equivalents * self.reactantMWs[1] / product_yield                
+                self.react_2_mass = (self.react_1_mols * mol_equivalents * self.reactantMWs[1]) / product_yield                
                 self.react_2_mols = self.react_2_mass / self.reactantMWs[1] 
-                self.react_2_volume = (self.react_2_mols / self.reactantsolubility[1]) * 1000 
+                self.react_2_volume = (self.react_2_mols / 0.5) * 1000
 
         except Exception as e: 
             print(e) 
@@ -170,10 +172,12 @@ class Reaction(object):
             'Product_SMILES': self.product,
             'Product_mass': self.productmass,
             'React_1_name': self.reactants[0].name,
+            'React_1_MW':self.reactants[0].MW,
             'React_1_location': self.reactants[0].location + '__' + self.reactants[0].comments,
             'React_1_mass': self.react_1_mass,
             'React_1_vol': self.react_1_volume,
             'React_2_name': self.reactants[1].name,
+            'React_2_MW':self.reactants[1].MW,
             'React_2_location': self.reactants[1].location + '__' + self.reactants[1].comments,
             'React_2_mass': self.react_2_mass,
             'React_2_vol': self.react_2_volume          
